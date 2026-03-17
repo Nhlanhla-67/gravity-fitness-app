@@ -10,24 +10,26 @@ const TIMER_R = (TIMER_SIZE - TIMER_STROKE) / 2;
 const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_R;
 
 export interface ActiveWorkoutCardProps {
+  exerciseId: string;
+  exerciseName: string;
   baselineTargetReps?: number;
 }
 
 export function ActiveWorkoutCard({
+  exerciseId,
+  exerciseName,
   baselineTargetReps = 10,
 }: ActiveWorkoutCardProps) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [exerciseId, setExerciseId] = useState<string | null>(null);
-  const [exerciseName, setExerciseName] = useState<string>("Loading…");
   const [targetReps, setTargetReps] = useState<number>(baselineTargetReps);
   const [repsCompleted, setRepsCompleted] = useState<number>(baselineTargetReps);
   const [hasEditedReps, setHasEditedReps] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
-  const [exerciseLoaded, setExerciseLoaded] = useState(false);
+  const [targetLoaded, setTargetLoaded] = useState(false);
   const [saving, setSaving] = useState<null | "perfect" | "too_easy" | "too_hard">(
     null,
   );
@@ -45,72 +47,73 @@ export function ActiveWorkoutCard({
   useEffect(() => {
     let isMounted = true;
 
-    async function load() {
+    async function loadUser() {
       setError(null);
-
-      const [{ data: userData, error: userErr }, { data: exData, error: exErr }] =
-        await Promise.all([
-          supabase.auth.getUser(),
-          supabase.from("exercises").select("*").order("id", { ascending: true }).limit(1),
-        ]);
-
+      const { data, error: userErr } = await supabase.auth.getUser();
       if (!isMounted) return;
 
       if (userErr) {
         setError(userErr.message);
       } else {
-        const uid = userData.user?.id ?? null;
-        setUserId(uid);
+        setUserId(data.user?.id ?? null);
       }
       setAuthLoaded(true);
-
-      if (exErr) {
-        setError(exErr.message);
-      } else {
-        const first = exData?.[0] as
-          | { id?: string; exercise_id?: string; name?: string; exercise_name?: string }
-          | undefined;
-
-        const exId = first?.id ?? first?.exercise_id ?? null;
-        const exName = first?.name ?? first?.exercise_name ?? null;
-
-        if (!exId || !exName) {
-          setError("No exercises found. Add at least one row to the exercises table.");
-        } else {
-          setExerciseId(exId);
-          setExerciseName(exName);
-
-          // Once we have both a user and an exercise, compute today's target.
-          const uid = userData.user?.id ?? null;
-          if (uid) {
-            try {
-              const nextTarget = await (getTodayWorkout as any)(uid, exId, supabase);
-              if (!isMounted) return;
-              setTargetReps(nextTarget);
-              if (!hasEditedReps) setRepsCompleted(nextTarget);
-            } catch (e) {
-              if (!isMounted) return;
-              setError(
-                e instanceof Error ? e.message : "Could not compute today’s workout.",
-              );
-              setTargetReps(baselineTargetReps);
-              if (!hasEditedReps) setRepsCompleted(baselineTargetReps);
-            }
-          } else {
-            setTargetReps(baselineTargetReps);
-            if (!hasEditedReps) setRepsCompleted(baselineTargetReps);
-          }
-        }
-      }
-      setExerciseLoaded(true);
     }
 
-    void load();
+    void loadUser();
 
     return () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function computeTarget() {
+      setError(null);
+      setTargetLoaded(false);
+      setSaved(null);
+
+      // Reset UI when switching exercises.
+      setTargetReps(baselineTargetReps);
+      setRepsCompleted(baselineTargetReps);
+      setHasEditedReps(false);
+
+      if (!authLoaded) return;
+      if (!userId) {
+        setTargetLoaded(true);
+        setError("You’re not signed in. Please log in and try again.");
+        return;
+      }
+      if (!exerciseId) {
+        setTargetLoaded(true);
+        setError("No exercise selected.");
+        return;
+      }
+
+      try {
+        const nextTarget = await (getTodayWorkout as any)(userId, exerciseId, supabase);
+        if (!isMounted) return;
+        setTargetReps(nextTarget);
+        if (!hasEditedReps) setRepsCompleted(nextTarget);
+      } catch (e) {
+        if (!isMounted) return;
+        setError(e instanceof Error ? e.message : "Could not compute today’s workout.");
+        setTargetReps(baselineTargetReps);
+        if (!hasEditedReps) setRepsCompleted(baselineTargetReps);
+      } finally {
+        if (!isMounted) return;
+        setTargetLoaded(true);
+      }
+    }
+
+    void computeTarget();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authLoaded, baselineTargetReps, exerciseId, userId]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -131,7 +134,7 @@ export function ActiveWorkoutCard({
   const progress = Math.min(1, (elapsedSeconds % lapSeconds) / lapSeconds);
   const strokeDashoffset = TIMER_CIRCUMFERENCE * (1 - progress);
 
-  const isLoading = !authLoaded || !exerciseLoaded;
+  const isLoading = !authLoaded || !targetLoaded;
 
   const canSave = useMemo(
     () => !isLoading && Boolean(userId && exerciseId && repsCompleted >= 0 && !saving),
@@ -156,10 +159,6 @@ export function ActiveWorkoutCard({
     if (isLoading) return;
     if (!userId) {
       setError("You’re not signed in. Please log in and try again.");
-      return;
-    }
-    if (!exerciseId) {
-      setError("No exercise loaded yet. Please try again in a moment.");
       return;
     }
 
