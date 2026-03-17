@@ -7,27 +7,28 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { ActiveWorkoutCard } from "@/components/workout/ActiveWorkoutCard";
 import ProgressChart from "@/components/workout/ProgressChart";
+import { getDailyRoutine } from "@/lib/algorithm";
 
 type ExerciseRow = {
   id?: string;
   exercise_id?: string;
   name?: string;
   exercise_name?: string;
+  body_part?: string;
 };
 
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
-  const [exercises, setExercises] = useState<Array<{ id: string; name: string }>>(
+  const [routineName, setRoutineName] = useState<string | null>(null);
+  const [dailyStack, setDailyStack] = useState<Array<{ id: string; name: string }>>(
     [],
   );
-  const [exerciseLoading, setExerciseLoading] = useState(false);
-  const [exerciseError, setExerciseError] = useState<string | null>(null);
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
-  const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(
-    null,
-  );
+  const [routineLoading, setRoutineLoading] = useState(false);
+  const [routineError, setRoutineError] = useState<string | null>(null);
+  const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
+  const [activeExerciseName, setActiveExerciseName] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -70,11 +71,11 @@ export default function DashboardPage() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadExercises() {
+    async function loadRoutine() {
       if (!user) return;
 
-      setExerciseLoading(true);
-      setExerciseError(null);
+      setRoutineLoading(true);
+      setRoutineError(null);
 
       const { data, error } = await supabase
         .from("exercises")
@@ -84,29 +85,38 @@ export default function DashboardPage() {
       if (!isMounted) return;
 
       if (error) {
-        setExerciseError(error.message);
-        setExercises([]);
-        setExerciseLoading(false);
+        setRoutineError(error.message);
+        setRoutineName(null);
+        setDailyStack([]);
+        setActiveExerciseId(null);
+        setActiveExerciseName(null);
+        setRoutineLoading(false);
         return;
       }
 
-      const normalized =
-        (data as ExerciseRow[] | null)?.flatMap((row) => {
+      const all = (data as ExerciseRow[] | null) ?? [];
+      const routine = getDailyRoutine(all);
+
+      setRoutineName(routine.routineName ?? null);
+
+      const normalizedStack =
+        (routine.exercises as ExerciseRow[] | null)?.flatMap((row) => {
           const id = row.id ?? row.exercise_id;
           const name = row.name ?? row.exercise_name;
           if (!id || !name) return [];
           return [{ id, name }];
         }) ?? [];
 
-      setExercises(normalized);
-      if (normalized.length > 0) {
-        setSelectedExerciseId((prev) => prev ?? normalized[0]!.id);
-        setSelectedExerciseName((prev) => prev ?? normalized[0]!.name);
+      setDailyStack(normalizedStack);
+      if (normalizedStack.length > 0) {
+        // Always default to the first exercise in today's stack.
+        setActiveExerciseId(normalizedStack[0]!.id);
+        setActiveExerciseName(normalizedStack[0]!.name);
       }
-      setExerciseLoading(false);
+      setRoutineLoading(false);
     }
 
-    void loadExercises();
+    void loadRoutine();
 
     return () => {
       isMounted = false;
@@ -136,7 +146,10 @@ export default function DashboardPage() {
           </p>
           <div className="mt-2 flex items-start justify-between gap-4">
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              Today’s Routine
+              Today’s Focus:{" "}
+              <span className="bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">
+                {routineName ?? "Loading…"}
+              </span>
             </h1>
             <Link
               href="/settings"
@@ -151,32 +164,34 @@ export default function DashboardPage() {
           </p>
         </header>
 
-        {/* Exercise selector */}
+        {/* AI Coach: today's stack */}
         <section className="mb-6 sm:mb-8">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-slate-200">Exercise</h2>
-            {exerciseLoading && (
-              <span className="text-xs text-slate-500">Loading…</span>
+            <h2 className="text-sm font-semibold text-slate-200">
+              Today’s Stack
+            </h2>
+            {routineLoading && (
+              <span className="text-xs text-slate-500">Building…</span>
             )}
           </div>
 
-          {exerciseError && (
+          {routineError && (
             <p className="mt-2 text-sm font-medium text-red-400" role="alert">
-              {exerciseError}
+              {routineError}
             </p>
           )}
 
           <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0">
             <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {exercises.map((ex) => {
-                const active = ex.id === selectedExerciseId;
+              {dailyStack.map((ex) => {
+                const active = ex.id === activeExerciseId;
                 return (
                   <button
                     key={ex.id}
                     type="button"
                     onClick={() => {
-                      setSelectedExerciseId(ex.id);
-                      setSelectedExerciseName(ex.name);
+                      setActiveExerciseId(ex.id);
+                      setActiveExerciseName(ex.name);
                     }}
                     className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950 ${
                       active
@@ -192,13 +207,13 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {selectedExerciseId && selectedExerciseName ? (
+        {activeExerciseId && activeExerciseName ? (
           <div className="space-y-4 sm:space-y-6">
             <ActiveWorkoutCard
-              exerciseId={selectedExerciseId}
-              exerciseName={selectedExerciseName}
+              exerciseId={activeExerciseId}
+              exerciseName={activeExerciseName}
             />
-            <ProgressChart userId={user.id} exerciseId={selectedExerciseId} />
+            <ProgressChart userId={user.id} exerciseId={activeExerciseId} />
           </div>
         ) : (
           <div className="w-full max-w-md mx-auto rounded-2xl border border-slate-800 bg-slate-900/40 p-6">

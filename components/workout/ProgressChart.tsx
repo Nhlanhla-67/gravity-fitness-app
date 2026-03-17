@@ -32,14 +32,14 @@ export default function ProgressChart({ userId, exerciseId }: ProgressChartProps
       }
 
       if (logs) {
-        // Format the date so it looks nice on the graph (e.g., "Mar 17")
+        // Format the date to include the time so every point is unique!
         const formattedData = logs.map(log => {
-          const date = new Date(log.logged_at);
-          return {
-            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            reps: log.reps_completed
-          };
-        });
+            const date = new Date(log.logged_at);
+            return {
+              date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+              reps: log.reps_completed
+            };
+          });
         
         setData(formattedData);
       }

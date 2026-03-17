@@ -31,3 +31,39 @@ export function calculateNextTarget(lastReps: number, difficulty: string): numbe
   
     return 10;
   }
+
+  export function getDailyRoutine(allExercises: any[]) {
+    // Get the current day of the week (0 = Sunday, 1 = Monday, etc.)
+    const dayOfWeek = new Date().getDay();
+    
+    let routineName = "";
+    let targetBodyParts: string[] = [];
+  
+    // Define the split based on the day
+    if (dayOfWeek === 1 || dayOfWeek === 4) {
+      routineName = "Upper Body Burn";
+      targetBodyParts = ['Chest/Triceps', 'Shoulders'];
+    } else if (dayOfWeek === 2 || dayOfWeek === 5) {
+      routineName = "Lower Body Power";
+      targetBodyParts = ['Legs'];
+    } else if (dayOfWeek === 3 || dayOfWeek === 6) {
+      routineName = "Core & Conditioning";
+      targetBodyParts = ['Core', 'Core/Cardio'];
+    } else {
+      routineName = "Full Body Active Recovery";
+      targetBodyParts = ['Full Body', 'Core'];
+    }
+  
+    // Filter the database exercises to match today's target body parts
+    const todaysExercises = allExercises.filter(ex => 
+      targetBodyParts.includes(ex.body_part) || ex.body_part === 'Full Body'
+    ).slice(0, 3); // Grab up to 3 exercises for the stack
+  
+    // Fallback in case the filtering misses
+    const finalExercises = todaysExercises.length > 0 ? todaysExercises : allExercises.slice(0, 3);
+  
+    return {
+      routineName,
+      exercises: finalExercises
+    };
+  }
