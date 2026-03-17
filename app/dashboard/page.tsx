@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { ActiveWorkoutCard } from "@/components/workout/ActiveWorkoutCard";
@@ -132,9 +133,17 @@ export default function DashboardPage() {
           <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
             Dashboard
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            Today’s Routine
-          </h1>
+          <div className="mt-2 flex items-start justify-between gap-4">
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              Today’s Routine
+            </h1>
+            <Link
+              href="/settings"
+              className="shrink-0 rounded-full border border-slate-800 bg-slate-900/40 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-900/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+            >
+              Settings
+            </Link>
+          </div>
           <p className="mt-2 text-sm text-slate-400 sm:text-base">
             You’re signed in as{" "}
             <span className="font-medium text-slate-200">{user.email}</span>.
