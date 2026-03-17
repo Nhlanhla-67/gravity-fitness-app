@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { ActiveWorkoutCard } from "@/components/workout/ActiveWorkoutCard";
+import ProgressChart from "@/components/workout/ProgressChart";
 
 type ExerciseRow = {
   id?: string;
@@ -192,10 +193,13 @@ export default function DashboardPage() {
         </section>
 
         {selectedExerciseId && selectedExerciseName ? (
-          <ActiveWorkoutCard
-            exerciseId={selectedExerciseId}
-            exerciseName={selectedExerciseName}
-          />
+          <div className="space-y-4 sm:space-y-6">
+            <ActiveWorkoutCard
+              exerciseId={selectedExerciseId}
+              exerciseName={selectedExerciseName}
+            />
+            <ProgressChart userId={user.id} exerciseId={selectedExerciseId} />
+          </div>
         ) : (
           <div className="w-full max-w-md mx-auto rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
             <p className="text-center text-sm text-slate-400">

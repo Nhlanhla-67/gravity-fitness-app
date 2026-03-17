@@ -129,9 +129,9 @@ export function ActiveWorkoutCard({
     .toString()
     .padStart(2, "0")}`;
 
-  // Optional: show progress as a lap (e.g. 90s = one full ring). Using 90s per "lap" for demo.
-  const lapSeconds = 90;
-  const progress = Math.min(1, (elapsedSeconds % lapSeconds) / lapSeconds);
+  // Progress ring completes a full circle at 60s.
+  const maxSeconds = 60;
+  const progress = Math.min(1, elapsedSeconds / maxSeconds);
   const strokeDashoffset = TIMER_CIRCUMFERENCE * (1 - progress);
 
   const isLoading = !authLoaded || !targetLoaded;
@@ -220,51 +220,64 @@ export function ActiveWorkoutCard({
       </div>
 
       {/* Circular timer */}
-      <button
-        type="button"
-        onClick={toggleTimer}
-        className="mx-auto mt-8 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-800 rounded-full"
-        aria-label={isRunning ? "Pause timer" : "Start timer"}
-      >
-        <div className="relative" style={{ width: TIMER_SIZE, height: TIMER_SIZE }}>
-          <svg
-            className="-rotate-90"
-            width={TIMER_SIZE}
-            height={TIMER_SIZE}
-            aria-hidden
-          >
-            <circle
-              cx={TIMER_SIZE / 2}
-              cy={TIMER_SIZE / 2}
-              r={TIMER_R}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={TIMER_STROKE}
-              className="text-slate-700"
-            />
-            <circle
-              cx={TIMER_SIZE / 2}
-              cy={TIMER_SIZE / 2}
-              r={TIMER_R}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={TIMER_STROKE}
-              strokeDasharray={TIMER_CIRCUMFERENCE}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              className="text-cyan-400 transition-[stroke-dashoffset] duration-1000"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold tabular-nums text-white sm:text-4xl">
-              {timeLabel}
-            </span>
-            <span className="mt-1 text-xs font-medium uppercase tracking-wider text-slate-500">
-              {isRunning ? "Tap to pause" : "Tap to start"}
-            </span>
+      <div className="mx-auto mt-8 flex w-fit flex-col items-center">
+        <button
+          type="button"
+          onClick={toggleTimer}
+          className="flex items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-800"
+          aria-label={isRunning ? "Pause timer" : "Start timer"}
+        >
+          <div className="relative" style={{ width: TIMER_SIZE, height: TIMER_SIZE }}>
+            <svg
+              className="-rotate-90"
+              width={TIMER_SIZE}
+              height={TIMER_SIZE}
+              aria-hidden
+            >
+              <circle
+                cx={TIMER_SIZE / 2}
+                cy={TIMER_SIZE / 2}
+                r={TIMER_R}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={TIMER_STROKE}
+                className="text-slate-700"
+              />
+              <circle
+                cx={TIMER_SIZE / 2}
+                cy={TIMER_SIZE / 2}
+                r={TIMER_R}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={TIMER_STROKE}
+                strokeDasharray={TIMER_CIRCUMFERENCE}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                className="text-cyan-400 transition-[stroke-dashoffset] duration-1000"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-3xl font-bold tabular-nums text-white sm:text-4xl">
+                {timeLabel}
+              </span>
+              <span className="mt-1 text-xs font-medium uppercase tracking-wider text-slate-500">
+                {isRunning ? "Tap to pause" : "Tap to start"}
+              </span>
+            </div>
           </div>
-        </div>
-      </button>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsRunning(false);
+            setElapsedSeconds(0);
+          }}
+          className="mt-3 text-xs font-medium text-slate-500 transition hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-800 rounded"
+        >
+          Reset
+        </button>
+      </div>
 
       {/* Reps counter */}
       <div className="mt-8 flex items-center justify-center gap-4 sm:gap-6">
