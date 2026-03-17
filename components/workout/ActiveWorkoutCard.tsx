@@ -13,12 +13,14 @@ export interface ActiveWorkoutCardProps {
   exerciseId: string;
   exerciseName: string;
   baselineTargetReps?: number;
+  onRepsForShareChange?: (reps: number) => void;
 }
 
 export function ActiveWorkoutCard({
   exerciseId,
   exerciseName,
   baselineTargetReps = 10,
+  onRepsForShareChange,
 }: ActiveWorkoutCardProps) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -135,6 +137,10 @@ export function ActiveWorkoutCard({
   const strokeDashoffset = TIMER_CIRCUMFERENCE * (1 - progress);
 
   const isLoading = !authLoaded || !targetLoaded;
+
+  useEffect(() => {
+    onRepsForShareChange?.(repsCompleted);
+  }, [onRepsForShareChange, repsCompleted]);
 
   const canSave = useMemo(
     () => !isLoading && Boolean(userId && exerciseId && repsCompleted >= 0 && !saving),

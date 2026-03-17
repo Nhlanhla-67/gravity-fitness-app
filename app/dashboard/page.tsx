@@ -9,6 +9,7 @@ import { ActiveWorkoutCard } from "@/components/workout/ActiveWorkoutCard";
 import ProgressChart from "@/components/workout/ProgressChart";
 import { getDailyRoutine } from "@/lib/algorithm";
 import { ShareButton } from "@/components/workout/ShareButton";
+import { ShareCard } from "@/components/workout/ShareCard";
 
 type ExerciseRow = {
   id?: string;
@@ -30,6 +31,7 @@ export default function DashboardPage() {
   const [routineError, setRoutineError] = useState<string | null>(null);
   const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
   const [activeExerciseName, setActiveExerciseName] = useState<string | null>(null);
+  const [shareReps, setShareReps] = useState<number>(10);
 
   useEffect(() => {
     let isMounted = true;
@@ -141,7 +143,18 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
-        <div id="export-card">
+        {/* Off-screen premium share poster */}
+        <div className="absolute left-[-9999px] top-0">
+          <div id="export-card">
+            <ShareCard
+              routineName={routineName ?? "Daily Stack"}
+              exerciseName={activeExerciseName ?? "Workout"}
+              reps={shareReps}
+            />
+          </div>
+        </div>
+
+        <div>
           <header className="mb-6 sm:mb-8">
             <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
               Dashboard
@@ -214,6 +227,7 @@ export default function DashboardPage() {
               <ActiveWorkoutCard
                 exerciseId={activeExerciseId}
                 exerciseName={activeExerciseName}
+                onRepsForShareChange={setShareReps}
               />
               <ProgressChart userId={user.id} exerciseId={activeExerciseId} />
             </div>
