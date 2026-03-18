@@ -9,7 +9,7 @@ import { ActiveWorkoutCard } from "@/components/workout/ActiveWorkoutCard";
 import ProgressChart from "@/components/workout/ProgressChart";
 import { getDailyRoutine } from "@/lib/algorithm";
 import { ShareButton } from "@/components/workout/ShareButton";
-import { ShareCard } from "@/components/workout/ShareCard";
+import ShareCard from "@/components/workout/ShareCard"; // Make sure this is a default import if you used 'export default function ShareCard'
 
 type ExerciseRow = {
   id?: string;
@@ -24,9 +24,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
   const [routineName, setRoutineName] = useState<string | null>(null);
-  const [dailyStack, setDailyStack] = useState<Array<{ id: string; name: string }>>(
-    [],
-  );
+  const [dailyStack, setDailyStack] = useState<Array<{ id: string; name: string }>>([]);
   const [routineLoading, setRoutineLoading] = useState(false);
   const [routineError, setRoutineError] = useState<string | null>(null);
   const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
@@ -143,15 +141,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
-        {/* Off-screen premium share poster */}
-        <div id="export-card" className="absolute left-[-9999px] top-0">
-          <ShareCard
-            routineName={routineName ?? "Daily Stack"}
-            exerciseName={activeExerciseName ?? "Walking Lunges"}
-            reps={shareReps}
-          />
-        </div>
-
         <div>
           <header className="mb-6 sm:mb-8">
             <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
@@ -238,11 +227,21 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 flex flex-col items-center">
           <ShareButton />
+          
+          {/* HIDDEN EXPORT CARD */}
+          <div className="fixed top-0 left-0 -z-50 opacity-0 pointer-events-none">
+            <div id="export-card">
+              <ShareCard 
+                routineName={routineName ?? "Daily Stack"} 
+                exerciseName={activeExerciseName ?? "Workout"} 
+                reps={shareReps} 
+              />
+            </div>
+          </div>
         </div>
       </main>
     </div>
   );
 }
-
