@@ -144,14 +144,12 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
         {/* Off-screen premium share poster */}
-        <div className="absolute left-[-9999px] top-0">
-          <div id="export-card">
-            <ShareCard
-              routineName={routineName ?? "Daily Stack"}
-              exerciseName={activeExerciseName ?? "Workout"}
-              reps={shareReps}
-            />
-          </div>
+        <div id="export-card" className="absolute left-[-9999px] top-0">
+          <ShareCard
+            routineName={routineName ?? "Daily Stack"}
+            exerciseName={activeExerciseName ?? "Walking Lunges"}
+            reps={shareReps}
+          />
         </div>
 
         <div>

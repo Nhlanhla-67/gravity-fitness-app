@@ -8,7 +8,7 @@ export interface ShareCardProps {
 
 export function ShareCard({ routineName, exerciseName, reps }: ShareCardProps) {
   const safeReps = Number.isFinite(reps) ? Math.max(0, Math.floor(reps)) : 0;
-  const headline = `CRUSHED ${safeReps} REPS OF`;
+  const headline = `CRUSHED ${safeReps} REPS OF ${exerciseName}`.toUpperCase();
 
   return (
     <div
@@ -44,36 +44,44 @@ export function ShareCard({ routineName, exerciseName, reps }: ShareCardProps) {
         }}
       />
 
+      {/* hero image slot (add your own high-res photo at /public/share/walking-lunges.jpg) */}
+      <div className="absolute inset-0">
+        <img
+          src="/share/walking-lunges.jpg"
+          alt="Fitness model performing walking lunges"
+          className="h-full w-full object-cover object-[60%_25%]"
+          draggable={false}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(15,23,42,0.92) 0%, rgba(15,23,42,0.68) 42%, rgba(15,23,42,0.92) 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 86% 10%, rgba(6,182,212,0.22), rgba(6,182,212,0) 52%)",
+          }}
+        />
+      </div>
+
       <div className="relative flex h-full flex-col px-16 py-16">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[22px] font-semibold tracking-[0.18em] text-slate-300">
-              TODAY’S FOCUS
-            </p>
-            <p className="mt-3 text-[44px] font-bold leading-tight text-white">
-              {routineName}
-            </p>
-          </div>
-          <div className="rounded-full border border-cyan-300/30 bg-cyan-400/10 px-5 py-2 text-[18px] font-semibold tracking-wide text-cyan-200">
-            AI COACH
-          </div>
+        <div>
+          <p className="text-[22px] font-semibold tracking-[0.18em] text-slate-300">
+            TODAY&apos;S FOCUS:
+          </p>
+          <p className="mt-3 text-[54px] font-black leading-[1.02] tracking-tight text-white">
+            {routineName.toUpperCase()}
+          </p>
         </div>
 
         <div className="mt-24">
-          <p className="text-[22px] font-semibold tracking-[0.22em] text-slate-300">
+          <p className="text-[96px] font-black leading-[0.95] tracking-tight text-white">
             {headline}
           </p>
-
-          <p className="mt-8 text-[92px] font-black leading-[0.98] tracking-tight text-white">
-            {exerciseName.toUpperCase()}
-          </p>
-
-          <div className="mt-14 flex items-center gap-4">
-            <div className="h-[2px] w-20 bg-cyan-400/70" />
-            <p className="text-[22px] font-semibold tracking-[0.18em] text-cyan-200">
-              GRAVITY STACK
-            </p>
-          </div>
         </div>
 
         <div className="mt-auto flex items-end justify-between">
@@ -84,9 +92,6 @@ export function ShareCard({ routineName, exerciseName, reps }: ShareCardProps) {
           </div>
 
           <div className="text-right">
-            <p className="text-[18px] font-semibold tracking-[0.4em] text-slate-400">
-              APP
-            </p>
             <p className="mt-2 text-[56px] font-black tracking-[0.18em] text-white">
               GRAVITY
             </p>
