@@ -9,6 +9,7 @@ import type { User } from "@supabase/supabase-js";
 export default function SettingsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [isPro, setIsPro] = useState(false); // <-- NEW: State to hold Pro status
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
@@ -17,9 +18,21 @@ export default function SettingsPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.replace("/login");
-      } else {
-        setUser(session.user);
+        return;
       }
+      setUser(session.user);
+
+      // <-- NEW: Fetch the user's Pro status from the database
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_pro")
+        .eq("id", session.user.id)
+        .single();
+        
+      if (profile) {
+        setIsPro(profile.is_pro);
+      }
+
       setLoading(false);
     }
     getUser();
@@ -36,23 +49,26 @@ export default function SettingsPage() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user?.id }), // <-- Safely passing the ID to Stripe!
+        body: JSON.stringify({ userId: user?.id }),
       });
       
       const data = await res.json();
       
       if (data.url) {
-        window.location.href = data.url; // Redirect to Stripe
+        window.location.href = data.url;
       } else {
-        // FORCE THE PHONE TO SHOW THE ERROR
         alert("Stripe Error: " + (data.error || "Check Vercel Logs"));
       }
     } catch (error: any) {
-      // FORCE NETWORK ERRORS TO SHOW
       alert("Network Error: " + error.message);
     } finally {
       setCheckoutLoading(false);
     }
+  };
+
+  const handleManageBilling = () => {
+    // This will eventually go to the Stripe Customer Portal
+    alert("This will open the Stripe Billing Portal where you can cancel!");
   };
 
   if (loading) {
@@ -72,18 +88,39 @@ export default function SettingsPage() {
           <div className="mb-8">
             <p className="text-sm text-slate-500 mb-1">Account Email</p>
             <p className="font-medium">{user?.email}</p>
+            {/* NEW: Cool Pro Badge */}
+            {isPro && (
+              <span className="inline-block mt-2 px-3 py-1 bg-cyan-500/20 text-cyan-400 text-xs font-bold rounded-full border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                PRO ACTIVE
+              </span>
+            )}
           </div>
 
           <div className="mb-8 p-5 bg-slate-950/50 border border-cyan-900/50 rounded-xl flex flex-col items-start">
             <h3 className="text-cyan-400 font-bold text-lg mb-2">Gravity Pro</h3>
-            <p className="text-sm text-slate-400 mb-4">Unlock advanced AI tracking, infinite workout history, and premium viral exports.</p>
-            <button 
-              onClick={handleUpgrade}
-              disabled={checkoutLoading}
-              className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-4 rounded-xl transition duration-200 shadow-[0_0_15px_rgba(6,182,212,0.4)] disabled:opacity-50"
-            >
-              {checkoutLoading ? "Connecting..." : "Upgrade to Pro ($5/mo)"}
-            </button>
+            <p className="text-sm text-slate-400 mb-4">
+              {isPro 
+                ? "You have unlocked advanced AI tracking, infinite workout history, and premium viral exports."
+                : "Unlock advanced AI tracking, infinite workout history, and premium viral exports."}
+            </p>
+            
+            {/* NEW: Conditional Button */}
+            {isPro ? (
+              <button 
+                onClick={handleManageBilling}
+                className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 border border-slate-700"
+              >
+                Manage Subscription
+              </button>
+            ) : (
+              <button 
+                onClick={handleUpgrade}
+                disabled={checkoutLoading}
+                className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-4 rounded-xl transition duration-200 shadow-[0_0_15px_rgba(6,182,212,0.4)] disabled:opacity-50"
+              >
+                {checkoutLoading ? "Connecting..." : "Upgrade to Pro ($5/mo)"}
+              </button>
+            )}
           </div>
 
           <button 
