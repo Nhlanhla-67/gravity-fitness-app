@@ -9,7 +9,7 @@ import { ActiveWorkoutCard } from "@/components/workout/ActiveWorkoutCard";
 import ProgressChart from "@/components/workout/ProgressChart";
 import { getDailyRoutine } from "@/lib/algorithm";
 import { ShareButton } from "@/components/workout/ShareButton";
-import ShareCard from "@/components/workout/ShareCard"; // Make sure this is a default import if you used 'export default function ShareCard'
+import { ShareCard } from "@/components/workout/ShareCard";
 
 type ExerciseRow = {
   id?: string;
