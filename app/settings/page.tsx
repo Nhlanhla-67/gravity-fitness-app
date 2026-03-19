@@ -9,7 +9,7 @@ import type { User } from "@supabase/supabase-js";
 export default function SettingsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [isPro, setIsPro] = useState(false); // <-- NEW: State to hold Pro status
+  const [isPro, setIsPro] = useState(false);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
@@ -22,7 +22,7 @@ export default function SettingsPage() {
       }
       setUser(session.user);
 
-      // <-- NEW: Fetch the user's Pro status from the database
+      // Fetch the user's Pro status from the database
       const { data: profile } = await supabase
         .from("profiles")
         .select("is_pro")
@@ -66,9 +66,27 @@ export default function SettingsPage() {
     }
   };
 
-  const handleManageBilling = () => {
-    // This will eventually go to the Stripe Customer Portal
-    alert("This will open the Stripe Billing Portal where you can cancel!");
+  const handleManageBilling = async () => {
+    setCheckoutLoading(true); 
+    try {
+      const res = await fetch("/api/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user?.email }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.url) {
+        window.location.href = data.url; // Blast them over to the Stripe Portal
+      } else {
+        alert("Portal Error: " + (data.error || "Check Vercel Logs"));
+      }
+    } catch (error: any) {
+      alert("Network Error: " + error.message);
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   if (loading) {
@@ -88,7 +106,6 @@ export default function SettingsPage() {
           <div className="mb-8">
             <p className="text-sm text-slate-500 mb-1">Account Email</p>
             <p className="font-medium">{user?.email}</p>
-            {/* NEW: Cool Pro Badge */}
             {isPro && (
               <span className="inline-block mt-2 px-3 py-1 bg-cyan-500/20 text-cyan-400 text-xs font-bold rounded-full border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
                 PRO ACTIVE
@@ -104,13 +121,13 @@ export default function SettingsPage() {
                 : "Unlock advanced AI tracking, infinite workout history, and premium viral exports."}
             </p>
             
-            {/* NEW: Conditional Button */}
             {isPro ? (
               <button 
                 onClick={handleManageBilling}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 border border-slate-700"
+                disabled={checkoutLoading}
+                className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 border border-slate-700 disabled:opacity-50"
               >
-                Manage Subscription
+                {checkoutLoading ? "Connecting..." : "Manage Subscription"}
               </button>
             ) : (
               <button 
