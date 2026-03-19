@@ -44,10 +44,12 @@ export default function SettingsPage() {
       if (data.url) {
         window.location.href = data.url; // Redirect to Stripe
       } else {
-        console.error("No URL returned from Stripe:", data);
+        // FORCE THE PHONE TO SHOW THE ERROR
+        alert("Stripe Error: " + (data.error || "Check Vercel Logs"));
       }
-    } catch (error) {
-      console.error("Checkout error:", error);
+    } catch (error: any) {
+      // FORCE NETWORK ERRORS TO SHOW
+      alert("Network Error: " + error.message);
     } finally {
       setCheckoutLoading(false);
     }
