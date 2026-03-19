@@ -1,6 +1,27 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // The Bouncer: Check if they have an active session
+    const checkActiveUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // If they are logged in, instantly teleport them to the app
+      if (session) {
+        router.push("/dashboard");
+      }
+    };
+    
+    checkActiveUser();
+  }, [router]);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* Hero */}
